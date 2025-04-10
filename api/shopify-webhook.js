@@ -1,25 +1,14 @@
 const axios = require('axios');
 
-// const VOLUME_RATIOS = {
-//   '50ml': 0.05, //20
-//   '100ml': 0.1, //10
-//   '500ml': 0.5, //2
-//   '1000ml': 1,
-//   '2.5l': 2.5, // 1 / 0.4
-//   '5l': 5, // 1 / 0.2
-//   '10l': 10, // 1 / 0.1
-// };
-
-const VOLUME_MULTIPLIERS = {
-  '50ml': 20,
-  '100ml': 10,
-  '500ml': 2,
+const VOLUME_RATIOS = {
+  '50ml': 0.05, //20
+  '100ml': 0.1, //10
+  '500ml': 0.5, //2
   '1000ml': 1,
-  '2.5l': 0.4,
-  '5l': 0.2,
-  '10l': 0.1,
+  '2.5l': 2.5, // 1 / 0.4
+  '5l': 5, // 1 / 0.2
+  '10l': 10, // 1 / 0.1
 };
-
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -98,11 +87,9 @@ module.exports = async (req, res) => {
 
     for (const variant of productData.variants) {
       const volumeKey = extractVolumeKey(variant.title);
-      // if (!volumeKey || !VOLUME_RATIOS[volumeKey]) continue;
-      if (!volumeKey || !VOLUME_MULTIPLIERS[volumeKey]) continue;
+      if (!volumeKey || !VOLUME_RATIOS[volumeKey]) continue;
 
-      // const ratio = VOLUME_RATIOS[volumeKey];
-      const ratio = VOLUME_MULTIPLIERS[volumeKey];
+      const ratio = VOLUME_RATIOS[volumeKey];
       const metafieldKey = `${volumeKey}_base_price`;
 
       const metafield = metafields.find(
