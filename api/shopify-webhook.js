@@ -26,8 +26,8 @@ module.exports = async (req, res) => {
 
     let multiplier = 1;
 
-    if (variant.title.includes('500ml')) multiplier = 0.6;
-    if (variant.title.includes('2000ml')) multiplier = 1.8;
+    if (variant.title.includes('500ml')) multiplier = 0.5;
+    if (variant.title.includes('2.5L')) multiplier = 2.5;
 
     return {
       id: variant.id,
