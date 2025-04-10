@@ -9,64 +9,56 @@ module.exports = async (req, res) => {
 
   const product = req.body;
 
-  // Delay to ensure Shopify's internal processes have updated the price
-  // await new Promise(resolve => setTimeout(resolve, 5000));  // 5-second delay (adjust as needed)
+  // Function to fetch the latest product data
+  const fetchProductData = async (productId) => {
+    try {
+      return await axios.get(
+        `https://${process.env.SHOP_DOMAIN}/admin/api/2023-10/products/${productId}.json`,
+        {
+          headers: {
+            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Error fetching product data from Shopify:', error.response?.data || error.message);
+      throw new Error('Failed to fetch the latest product data');
+    }
+  };
 
-  // Fetch the current product data from Shopify to get the latest prices
-  let shopifyProduct;
-  try {
-    shopifyProduct = await axios.get(
-      `https://${process.env.SHOP_DOMAIN}/admin/api/2023-10/products/${product.id}.json`,
-      {
-        headers: {
-          'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
-        },
-      }
-    );
-  } catch (error) {
-    console.error('Error fetching product data from Shopify:', error.response?.data || error.message);
-    return res.status(500).send('Failed to fetch the latest product data');
-  }
+  // Function to update variants
+  const updateVariants = async (productData) => {
+    const baseVariant = productData.variants.find((v) => {
+      const hasBasePriceMetafield = v.metafields?.some(
+        (mf) => mf.namespace === 'product.custom' && mf.key === 'base_price'
+      );
+      return hasBasePriceMetafield || v.title.includes('1000ml');
+    });
 
-  const productData = shopifyProduct.data.product;
+    if (!baseVariant) {
+      throw new Error('Base variant not found');
+    }
 
-  // Find the base variant (e.g., 1000ml)
-  const baseVariant = productData.variants.find((v) => {
-    // Check if the variant has the base_price metafield
-    const hasBasePriceMetafield = v.metafields?.some(
-      (mf) => mf.namespace === 'product.custom' && mf.key === 'base_price'
-    );
+    const basePrice = parseFloat(baseVariant.price);
 
-    // You can keep the title check as a fallback or remove it entirely
-    return hasBasePriceMetafield || v.title.includes('1000ml');
-  });
+    const updatedVariants = productData.variants.map((variant) => {
+      if (variant.id === baseVariant.id) return null;
 
-  if (!baseVariant) {
-    return res.status(200).send('Base variant not found.');
-  }
+      let multiplier = 1;
 
-  const basePrice = parseFloat(baseVariant.price);
+      if (variant.title.includes('50ml')) multiplier = 0.05;
+      if (variant.title.includes('100ml')) multiplier = 0.1;
+      if (variant.title.includes('500ml')) multiplier = 0.5;
+      if (variant.title.includes('2.5L')) multiplier = 2.5;
+      if (variant.title.includes('5L')) multiplier = 5;
+      if (variant.title.includes('10L')) multiplier = 10;
 
-  // Define logic for other variant prices
-  const updatedVariants = productData.variants.map((variant) => {
-    if (variant.id === baseVariant.id) return null;
+      return {
+        id: variant.id,
+        price: (basePrice * multiplier).toFixed(2),
+      };
+    }).filter(Boolean);
 
-    let multiplier = 1;
-
-    if (variant.title.includes('50ml')) multiplier = 0.05;
-    if (variant.title.includes('100ml')) multiplier = 0.1;
-    if (variant.title.includes('500ml')) multiplier = 0.5;
-    if (variant.title.includes('2.5L')) multiplier = 2.5;
-    if (variant.title.includes('5L')) multiplier = 5;
-    if (variant.title.includes('10L')) multiplier = 10;
-
-    return {
-      id: variant.id,
-      price: (basePrice * multiplier).toFixed(2),
-    };
-  }).filter(Boolean);
-
-  try {
     // Update each variant using Shopify Admin API
     for (const variant of updatedVariants) {
       await axios.put(
@@ -82,10 +74,28 @@ module.exports = async (req, res) => {
         }
       );
     }
+  };
 
-    return res.status(200).send('Variants updated');
-  } catch (err) {
-    console.error(err.response?.data || err.message);
-    return res.status(500).send('Failed to update variants');
+  // First attempt to update
+  let shopifyProduct;
+  try {
+    shopifyProduct = await fetchProductData(product.id);
+    await updateVariants(shopifyProduct.data.product);
+    return res.status(200).send('Variants updated successfully (First Run)');
+  } catch (error) {
+    console.error('Error during first run:', error.message);
+  }
+
+  // If first attempt failed or didn't update correctly, wait for a moment and try again
+  console.log('Retrying the function (Second Run)...');
+  await new Promise(resolve => setTimeout(resolve, 5000));  // 5-second delay (adjust as needed)
+
+  try {
+    shopifyProduct = await fetchProductData(product.id);
+    await updateVariants(shopifyProduct.data.product);
+    return res.status(200).send('Variants updated successfully (Second Run)');
+  } catch (error) {
+    console.error('Error during second run:', error.message);
+    return res.status(500).send('Failed to update variants after retry');
   }
 };
