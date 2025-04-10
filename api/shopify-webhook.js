@@ -9,27 +9,43 @@ module.exports = async (req, res) => {
 
   const product = req.body;
 
+  // Fetch the current product data from Shopify to get the latest prices
+  let shopifyProduct;
+  try {
+    shopifyProduct = await axios.get(
+      `https://${process.env.SHOP_DOMAIN}/admin/api/2023-10/products/${product.id}.json`,
+      {
+        headers: {
+          'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+        },
+      }
+    );
+  } catch (error) {
+    console.error('Error fetching product data from Shopify:', error.response?.data || error.message);
+    return res.status(500).send('Failed to fetch the latest product data');
+  }
+
+  const productData = shopifyProduct.data.product;
+
   // Find the base variant (e.g., 1000ml)
-  const baseVariant = product.variants.find((v) => {
+  const baseVariant = productData.variants.find((v) => {
     // Check if the variant has the base_price metafield
     const hasBasePriceMetafield = v.metafields?.some(
       (mf) => mf.namespace === 'product.custom' && mf.key === 'base_price'
     );
-  
+
     // You can keep the title check as a fallback or remove it entirely
     return hasBasePriceMetafield || v.title.includes('1000ml');
   });
-  
 
   if (!baseVariant) {
     return res.status(200).send('Base variant not found.');
   }
 
   const basePrice = parseFloat(baseVariant.price);
-  // if (parseFloat(variant.price) === parseFloat(existingVariant.price)) return null;
 
   // Define logic for other variant prices
-  const updatedVariants = product.variants.map((variant) => {
+  const updatedVariants = productData.variants.map((variant) => {
     if (variant.id === baseVariant.id) return null;
 
     let multiplier = 1;
