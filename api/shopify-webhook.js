@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
   const product = req.body;
 
   // Delay to ensure Shopify's internal processes have updated the price
-  await new Promise(resolve => setTimeout(resolve, 7000));  // 5-second delay (adjust as needed)
+  await new Promise(resolve => setTimeout(resolve, 5000));  // 5-second delay (adjust as needed)
 
   // Fetch the current product data from Shopify to get the latest prices
   let shopifyProduct;
