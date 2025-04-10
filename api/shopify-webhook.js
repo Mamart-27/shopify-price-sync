@@ -33,8 +33,12 @@ module.exports = async (req, res) => {
 
     let multiplier = 1;
 
+    if (variant.title.includes('50ml')) multiplier = 0.05;
+    if (variant.title.includes('100ml')) multiplier = 0.1;
     if (variant.title.includes('500ml')) multiplier = 0.5;
     if (variant.title.includes('2.5L')) multiplier = 2.5;
+    if (variant.title.includes('5L')) multiplier = 5;
+    if (variant.title.includes('10L')) multiplier = 10;
 
     return {
       id: variant.id,
