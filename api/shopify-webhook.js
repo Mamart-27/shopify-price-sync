@@ -89,12 +89,11 @@ module.exports = async (req, res) => {
 
     for (const variant of productData.variants) {
       const volumeKey = extractVolumeKey(variant.title);
-      if (!volumeKey || !VOLUME_RATIOS[volumeKey]) continue;
+      const volumeKey = extractVolumeKey(variant.title);
       if (!volumeKey || !VOLUME_MULTIPLIERS[volumeKey]) continue;
 
-      // const ratio = VOLUME_RATIOS[volumeKey];
-      const ratio = VOLUME_MULTIPLIERS[volumeKey];
-      const metafieldKey = `${volumeKey}_base_price`;
+      const multiplier = VOLUME_MULTIPLIERS[volumeKey];
+      const metafieldKey = getMetafieldKey(volumeKey);
 
       const metafield = metafields.find(
         (mf) => mf.namespace === 'custom' && mf.key === metafieldKey
