@@ -89,7 +89,6 @@ module.exports = async (req, res) => {
 
     for (const variant of productData.variants) {
       const volumeKey = extractVolumeKey(variant.title);
-      const volumeKey = extractVolumeKey(variant.title);
       if (!volumeKey || !VOLUME_MULTIPLIERS[volumeKey]) continue;
 
       const multiplier = VOLUME_MULTIPLIERS[volumeKey];
