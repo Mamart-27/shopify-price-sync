@@ -68,6 +68,6 @@ module.exports = async (req, res) => {
   } catch (err) {
     console.error(err.response?.data || err.message);
     return error(err.response);
-    return res.status(500).send('Failed to update variants');
+    // return res.status(500).send('Failed to update variants');
   }
 };
