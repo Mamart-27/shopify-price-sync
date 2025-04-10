@@ -88,8 +88,10 @@ module.exports = async (req, res) => {
     for (const variant of productData.variants) {
       const volumeKey = extractVolumeKey(variant.title);
       if (!volumeKey || !VOLUME_RATIOS[volumeKey]) continue;
+      if (!volumeKey || !VOLUME_MULTIPLIERS[volumeKey]) continue;
 
-      const ratio = VOLUME_RATIOS[volumeKey];
+      // const ratio = VOLUME_RATIOS[volumeKey];
+      const ratio = VOLUME_MULTIPLIERS[volumeKey];
       const metafieldKey = `${volumeKey}_base_price`;
 
       const metafield = metafields.find(
@@ -104,8 +106,11 @@ module.exports = async (req, res) => {
       const currentPrice = parseFloat(variant.price);
       const currentBase = parseFloat(metafield.value);
 
-      const priceFromBase = parseFloat((currentBase * ratio).toFixed(2));
-      const baseFromPrice = parseFloat((currentPrice / ratio).toFixed(2));
+      // const priceFromBase = parseFloat((currentBase * ratio).toFixed(2));
+      // const baseFromPrice = parseFloat((currentPrice / ratio).toFixed(2));
+      const priceFromBase = parseFloat((currentBase / ratio).toFixed(2));
+      const baseFromPrice = parseFloat((currentPrice * ratio).toFixed(2));
+
 
       const priceMismatch = Math.abs(currentPrice - priceFromBase) > 0.01;
       const baseMismatch = Math.abs(currentBase - baseFromPrice) > 0.01;
