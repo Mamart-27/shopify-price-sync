@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
   const baseVariant = product.variants.find((v) => {
     // Check if the variant has the base_price metafield
     const hasBasePriceMetafield = v.metafields?.some(
-      (mf) => mf.namespace === 'custom' && mf.key === 'base_price'
+      (mf) => mf.namespace === 'product.custom' && mf.key === 'base_price'
     );
   
     // You can keep the title check as a fallback or remove it entirely
