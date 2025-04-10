@@ -88,7 +88,7 @@ module.exports = async (req, res) => {
 
   // Regardless of the first run outcome, retry after a brief delay
   console.log('Retrying the function (Second Run)...');
-  await new Promise(resolve => setTimeout(resolve, 5000));  // 5-second delay (adjust as needed)
+  await new Promise(resolve => setTimeout(resolve, 2000));  // 5-second delay (adjust as needed)
 
   try {
     shopifyProduct = await fetchProductData(product.id);
