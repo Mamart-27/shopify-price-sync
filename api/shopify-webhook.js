@@ -1,14 +1,15 @@
 const axios = require('axios');
 
-const VOLUME_RATIOS = {
-  '50ml': 0.05, //20
-  '100ml': 0.1, //10
-  '500ml': 0.5, //2
+const VOLUME_MULTIPLIERS = {
+  '50ml': 20,
+  '100ml': 10,
+  '500ml': 2,
   '1000ml': 1,
-  '2.5l': 2.5, // 1 / 0.4
-  '5l': 5, // 1 / 0.2
-  '10l': 10, // 1 / 0.1
+  '2.5l': 0.4,
+  '5l': 0.2,
+  '10l': 0.1,
 };
+
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -75,11 +76,12 @@ module.exports = async (req, res) => {
   };
 
   const extractVolumeKey = (title) => {
-    const match = title.match(/([\d.]+)(ml|l)/i);
+    const match = title.toLowerCase().replace(/\s+/g, '').match(/([\d.]+)(ml|l)/);
     if (!match) return null;
     const [_, amount, unit] = match;
-    return `${amount}${unit.toLowerCase()}`; // e.g., "50ml", "2.5l"
+    return `${amount}${unit}`; // e.g., "2.5l"
   };
+  
 
   try {
     const productData = await fetchProductData(product.id);
@@ -99,7 +101,7 @@ module.exports = async (req, res) => {
       );
 
       if (!metafield) {
-        console.warn(`Missing metafield for ${variant.title}`);
+        console.warn(`Missing metafield "${metafieldKey}" for ${variant.title}`);
         continue;
       }
 
