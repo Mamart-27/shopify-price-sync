@@ -26,6 +26,7 @@ module.exports = async (req, res) => {
   }
 
   const basePrice = parseFloat(baseVariant.price);
+  if (parseFloat(variant.price) === parseFloat(existingVariant.price)) return null;
 
   // Define logic for other variant prices
   const updatedVariants = product.variants.map((variant) => {
@@ -66,6 +67,7 @@ module.exports = async (req, res) => {
     return res.status(200).send('Variants updated');
   } catch (err) {
     console.error(err.response?.data || err.message);
+    return error(err.response)
     return res.status(500).send('Failed to update variants');
   }
 };
