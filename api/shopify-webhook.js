@@ -41,28 +41,47 @@ module.exports = async (req, res) => {
     }
   };
 
-  const updateVariants = async (productData, basePrice) => {
-    const updatedVariants = productData.variants.map((variant) => {
-      let multiplier = 1;
+  const extractVolumeKey = (title) => {
+    const match = title.match(/([\d.]+)(ml|l)/i);
+    if (!match) return null;
 
-      if (variant.title.includes('50ml')) multiplier = 0.05;
-      else if (variant.title.includes('100ml')) multiplier = 0.1;
-      else if (variant.title.includes('500ml')) multiplier = 0.5;
-      else if (variant.title.includes('1000ml')) multiplier = 1;
-      else if (variant.title.includes('2.5L')) multiplier = 2.5;
-      else if (variant.title.includes('5L')) multiplier = 5;
-      else if (variant.title.includes('10L')) multiplier = 10;
+    const [_, amount, unit] = match;
+    const normalizedUnit = unit.toLowerCase() === 'l' ? 'l' : 'ml';
+    return `${amount}${normalizedUnit}_base_price`.toLowerCase();
+  };
 
-      return {
-        id: variant.id,
-        price: (basePrice * multiplier).toFixed(2),
-      };
-    });
+  const updateVariants = async (productData, metafields) => {
+    for (const variant of productData.variants) {
+      const volumeKey = extractVolumeKey(variant.title);
 
-    for (const variant of updatedVariants) {
+      if (!volumeKey) {
+        console.warn(`Could not extract volume key from title: ${variant.title}`);
+        continue;
+      }
+
+      const matchedMetafield = metafields.find(
+        (mf) => mf.namespace === 'custom' && mf.key === volumeKey
+      );
+
+      if (!matchedMetafield) {
+        console.warn(`Metafield ${volumeKey} not found for product`);
+        continue;
+      }
+
+      const price = parseFloat(matchedMetafield.value);
+      if (isNaN(price)) {
+        console.warn(`Invalid price in metafield ${volumeKey}`);
+        continue;
+      }
+
       await axios.put(
         `https://${process.env.SHOP_DOMAIN}/admin/api/2023-10/variants/${variant.id}.json`,
-        { variant },
+        {
+          variant: {
+            id: variant.id,
+            price: price.toFixed(2),
+          },
+        },
         {
           headers: {
             'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
@@ -77,21 +96,7 @@ module.exports = async (req, res) => {
     const productData = await fetchProductData(product.id);
     const metafields = await fetchProductMetafields(product.id);
 
-    const baseMetafield = metafields.find(
-      (mf) => mf.namespace === 'custom' && mf.key === 'base_price'
-    );
-
-    if (!baseMetafield) {
-      throw new Error('base_price metafield not found on product');
-    }
-
-    const basePrice = parseFloat(baseMetafield.value);
-
-    if (isNaN(basePrice)) {
-      throw new Error('Invalid base_price value');
-    }
-
-    await updateVariants(productData, basePrice);
+    await updateVariants(productData, metafields);
     res.status(200).send('Variants updated successfully');
   } catch (error) {
     console.error('Error:', error.message);
