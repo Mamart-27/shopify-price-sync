@@ -39,7 +39,16 @@ module.exports = async (req, res) => {
       throw new Error('Base variant not found');
     }
 
-    const basePrice = parseFloat(baseVariant.price);
+    // Fetch the base price from the metafield
+    const baseMetafield = baseVariant.metafields.find(
+      (mf) => mf.namespace === 'product.custom' && mf.key === 'base_price'
+    );
+
+    const basePrice = parseFloat(baseMetafield?.value);
+
+    if (isNaN(basePrice)) {
+      throw new Error('Base price is invalid or missing in the metafield');
+    }
 
     const updatedVariants = productData.variants.map((variant) => {
       if (variant.id === baseVariant.id) return null;
@@ -86,17 +95,17 @@ module.exports = async (req, res) => {
     console.error('Error during first run:', error.message);
   }
 
-//   // Regardless of the first run outcome, retry after a brief delay
-//   console.log('Retrying the function (Second Run)...');
-//   await new Promise(resolve => setTimeout(resolve, 2000));  // 5-second delay (adjust as needed)
+  // // Regardless of the first run outcome, retry after a brief delay
+  // console.log('Retrying the function (Second Run)...');
+  // await new Promise(resolve => setTimeout(resolve, 2000));  // 2-second delay (adjust as needed)
 
-//   try {
-//     shopifyProduct = await fetchProductData(product.id);
-//     await updateVariants(shopifyProduct.data.product);
-//     console.log('Second run: Variants updated successfully');
-//     return res.status(200).send('Variants updated successfully after second run');
-//   } catch (error) {
-//     console.error('Error during second run:', error.message);
-//     return res.status(500).send('Failed to update variants after second run');
-//   }
+  // try {
+  //   shopifyProduct = await fetchProductData(product.id);
+  //   await updateVariants(shopifyProduct.data.product);
+  //   console.log('Second run: Variants updated successfully');
+  //   return res.status(200).send('Variants updated successfully after second run');
+  // } catch (error) {
+  //   console.error('Error during second run:', error.message);
+  //   return res.status(500).send('Failed to update variants after second run');
+  // }
 };
