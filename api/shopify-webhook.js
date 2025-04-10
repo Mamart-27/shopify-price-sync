@@ -10,9 +10,16 @@ module.exports = async (req, res) => {
   const product = req.body;
 
   // Find the base variant (e.g., 1000ml)
-  const baseVariant = product.variants.find(
-    (v) => v.title.includes('1000ml') // or use SKU or metafield
-  );
+  const baseVariant = product.variants.find((v) => {
+    // Check if the variant has the base_price metafield
+    const hasBasePriceMetafield = v.metafields?.some(
+      (mf) => mf.namespace === 'custom' && mf.key === 'base_price'
+    );
+  
+    // You can keep the title check as a fallback or remove it entirely
+    return hasBasePriceMetafield || v.title.includes('1000ml');
+  });
+  
 
   if (!baseVariant) {
     return res.status(200).send('Base variant not found.');
