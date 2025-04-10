@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
   }
 
   const basePrice = parseFloat(baseVariant.price);
-  if (parseFloat(variant.price) === parseFloat(existingVariant.price)) return null;
+  // if (parseFloat(variant.price) === parseFloat(existingVariant.price)) return null;
 
   // Define logic for other variant prices
   const updatedVariants = product.variants.map((variant) => {
