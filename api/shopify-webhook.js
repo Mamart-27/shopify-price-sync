@@ -1,75 +1,72 @@
-import axios from "axios";
+// api/shopify-webhook.js
 
-const GRAPHQL_ENDPOINT = `https://${process.env.SHOPIFY_STORE_NAME}/admin/api/2023-10/graphql.json`;
+const axios = require('axios');
 
-async function graphqlRequest(query, variables = {}) {
-  const res = await axios.post(
-    GRAPHQL_ENDPOINT,
-    { query, variables },
-    {
-      headers: {
-        "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-  return res.data.data;
-}
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).send('Method Not Allowed');
+  }
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).end("Method Not Allowed");
+  const product = req.body;
 
-  const productId = req.body?.id;
-  if (!productId) return res.status(400).send("Missing product ID");
+  // Find the base variant (e.g., 1000ml)
+  const baseVariant = product.variants.find((v) => {
+    // Check if the variant has the base_price metafield
+    const hasBasePriceMetafield = v.metafields?.some(
+      (mf) => mf.namespace === 'custom' && mf.key === 'base_price'
+    );
+  
+    // You can keep the title check as a fallback or remove it entirely
+    return hasBasePriceMetafield || v.title.includes('1000ml');
+  });
+  
+
+  if (!baseVariant) {
+    return res.status(200).send('Base variant not found.');
+  }
+
+  const basePrice = parseFloat(baseVariant.price);
+  // if (parseFloat(variant.price) === parseFloat(existingVariant.price)) return null;
+
+  // Define logic for other variant prices
+  const updatedVariants = product.variants.map((variant) => {
+    if (variant.id === baseVariant.id) return null;
+
+    let multiplier = 1;
+
+    if (variant.title.includes('50ml')) multiplier = 0.05;
+    if (variant.title.includes('100ml')) multiplier = 0.1;
+    if (variant.title.includes('500ml')) multiplier = 0.5;
+    if (variant.title.includes('2.5L')) multiplier = 2.5;
+    if (variant.title.includes('5L')) multiplier = 5;
+    if (variant.title.includes('10L')) multiplier = 10;
+
+    return {
+      id: variant.id,
+      price: (basePrice * multiplier).toFixed(2),
+    };
+  }).filter(Boolean);
 
   try {
-    const productGID = `gid://shopify/Product/${productId}`;
-    const query = `
-      query getProduct($id: ID!) {
-        product(id: $id) {
-          metafield(namespace: "custom", key: "base_price") {
-            value
-          }
-          variants(first: 100) {
-            edges {
-              node {
-                id
-                title
-              }
-            }
-          }
+    // Update each variant using Shopify Admin API
+    for (const variant of updatedVariants) {
+      await axios.put(
+        `https://${process.env.SHOP_DOMAIN}/admin/api/2023-10/variants/${variant.id}.json`,
+        {
+          variant: { id: variant.id, price: variant.price },
+        },
+        {
+          headers: {
+            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+            'Content-Type': 'application/json',
+          },
         }
-      }
-    `;
+      );
+    }
 
-    const result = await graphqlRequest(query, { id: productGID });
-    const basePrice = parseFloat(result.product.metafield?.value || 0);
-    if (!basePrice) return res.status(200).send("No base price found.");
-
-    const updates = result.product.variants.edges.map(({ node }) => {
-      const match = node.title.match(/(\d+)\s*ml/i);
-      if (!match) return null;
-      const volume = parseFloat(match[1]);
-      const calculatedPrice = ((volume / 500) * basePrice).toFixed(2);
-      return `
-        update${node.id.replace(/[^0-9]/g, "")}: productVariantUpdate(input: {
-          id: "${node.id}",
-          price: "${calculatedPrice}"
-        }) {
-          productVariant { id price }
-          userErrors { field message }
-        }
-      `;
-    }).filter(Boolean).join("\n");
-
-    if (!updates) return res.status(200).send("No variants matched volume pattern");
-
-    const mutation = `mutation { ${updates} }`;
-    await graphqlRequest(mutation);
-
-    return res.status(200).send("Variants updated successfully");
+    return res.status(200).send('Variants updated');
   } catch (err) {
-    console.error("Webhook Error:", err.message);
-    return res.status(500).send("Server Error");
+    console.error(err.response?.data || err.message);
+    return res.status(500).send('Failed to update variants');
   }
-}
+};
