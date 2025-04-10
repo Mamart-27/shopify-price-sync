@@ -77,7 +77,7 @@ module.exports = async (req, res) => {
     const metafields = await fetchProductMetafields(product.id);
 
     const baseMetafield = metafields.find(
-      (mf) => mf.namespace === 'product.custom' && mf.key === 'base_price'
+      (mf) => mf.namespace === 'custom' && mf.key === 'base_price'
     );
 
     if (!baseMetafield) {
