@@ -1,16 +1,22 @@
 const axios = require('axios');
 
+// Define volume multipliers for each variant size.
 const VOLUME_MULTIPLIERS = {
-  '50ml': 20,
-  '100ml': 10,
-  '500ml': 2,
-  '1000ml': 1,
-  '2.5l': 0.4,
-  '5l': 0.2,
-  '10l': 0.1,
+  '50ml': 20, // 50ml base price multiplied by 20 for the actual price of 1000ml.
+  '100ml': 10, // 100ml base price multiplied by 10 for the actual price of 1000ml.
+  '500ml': 2,  // 500ml base price multiplied by 2 for the actual price of 1000ml.
+  '1000ml': 1, // 1000ml base price stays the same.
+  '2.5l': 0.4, // 2.5L base price divided by 0.4 for the actual price of 1000ml.
+  '5l': 0.2,   // 5L base price divided by 0.2 for the actual price of 1000ml.
+  '10l': 0.1,  // 10L base price divided by 0.1 for the actual price of 1000ml.
 };
 
+// Function to derive the metafield key for each volume variant.
+const getMetafieldKey = (volumeKey) => {
+  return `${volumeKey.replace('.', '_')}_base_price`;
+};
 
+// Main function to process the product variants and update prices.
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).send('Method Not Allowed');
@@ -18,6 +24,7 @@ module.exports = async (req, res) => {
 
   const product = req.body;
 
+  // Fetch product data from Shopify Admin API.
   const fetchProductData = async (productId) => {
     const { data } = await axios.get(
       `https://${process.env.SHOP_DOMAIN}/admin/api/2023-10/products/${productId}.json`,
@@ -30,6 +37,7 @@ module.exports = async (req, res) => {
     return data.product;
   };
 
+  // Fetch product metafields.
   const fetchProductMetafields = async (productId) => {
     const { data } = await axios.get(
       `https://${process.env.SHOP_DOMAIN}/admin/api/2023-10/products/${productId}/metafields.json`,
@@ -42,6 +50,7 @@ module.exports = async (req, res) => {
     return data.metafields;
   };
 
+  // Update the price of a variant in Shopify.
   const updateVariantPrice = async (variantId, newPrice) => {
     await axios.put(
       `https://${process.env.SHOP_DOMAIN}/admin/api/2023-10/variants/${variantId}.json`,
@@ -57,6 +66,7 @@ module.exports = async (req, res) => {
     );
   };
 
+  // Update a product's metafield in Shopify.
   const updateProductMetafield = async (productId, metafieldId, newValue) => {
     await axios.put(
       `https://${process.env.SHOP_DOMAIN}/admin/api/2023-10/metafields/${metafieldId}.json`,
@@ -75,13 +85,13 @@ module.exports = async (req, res) => {
     );
   };
 
+  // Extract the volume key from variant titles, such as "50ml", "100ml", "2.5l".
   const extractVolumeKey = (title) => {
     const match = title.toLowerCase().replace(/\s+/g, '').match(/([\d.]+)(ml|l)/);
     if (!match) return null;
     const [_, amount, unit] = match;
-    return `${amount}${unit}`; // e.g., "2.5l"
+    return `${amount}${unit}`; // e.g., "50ml" or "2.5l"
   };
-  
 
   try {
     const productData = await fetchProductData(product.id);
@@ -106,12 +116,11 @@ module.exports = async (req, res) => {
       const currentPrice = parseFloat(variant.price);
       const currentBase = parseFloat(metafield.value);
 
-      // const priceFromBase = parseFloat((currentBase * ratio).toFixed(2));
-      // const baseFromPrice = parseFloat((currentPrice / ratio).toFixed(2));
-      const priceFromBase = parseFloat((currentBase / ratio).toFixed(2));
-      const baseFromPrice = parseFloat((currentPrice * ratio).toFixed(2));
+      // Calculate price from base and base from price using the multiplier.
+      const priceFromBase = parseFloat((currentBase / multiplier).toFixed(2));
+      const baseFromPrice = parseFloat((currentPrice * multiplier).toFixed(2));
 
-
+      // Check if there is a price mismatch and base mismatch.
       const priceMismatch = Math.abs(currentPrice - priceFromBase) > 0.01;
       const baseMismatch = Math.abs(currentBase - baseFromPrice) > 0.01;
 
