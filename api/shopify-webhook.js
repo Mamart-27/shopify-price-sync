@@ -11,6 +11,8 @@ const VOLUME_MULTIPLIERS = {
   '10l': 0.1,  // 10L base price divided by 0.1 for the actual price of 1000ml.
 };
 
+console.log(VOLUME_MULTIPLIERS);
+
 // Function to derive the metafield key for each volume variant.
 const getMetafieldKey = (volumeKey) => {
   return `${volumeKey.replace('.', '_')}_base_price`;
