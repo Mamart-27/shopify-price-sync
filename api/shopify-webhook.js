@@ -172,7 +172,6 @@ module.exports = async (req, res) => {
         console.log(`Updated price for ${volumeKey} to ${priceFromBase}`);
       } else if (currentBase===0 && priceMismatch) {
         // Update base to match price
-        await updateProductMetafield(metafield.id, baseFromPrice);
         console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
       } else if (priceMismatch && baseMismatch) {
         // Both are off — prioritize base price as source of truth
@@ -181,7 +180,8 @@ module.exports = async (req, res) => {
       } else {
         console.log(`No update needed for ${volumeKey}`);
       }
-
+      
+      await updateProductMetafield(metafield.id, baseFromPrice);
     }
 
     res.status(200).send('Sync complete');
