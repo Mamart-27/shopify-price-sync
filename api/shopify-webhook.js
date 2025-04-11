@@ -136,13 +136,15 @@ module.exports = async (req, res) => {
         // Both are off — prioritize base price as source of truth
         await updateVariantPrice(variant.id, priceFromBase);
         console.log(`Forced price sync for ${volumeKey} to ${priceFromBase}`);
-      } else if (currentBase <= 0 || currentBase === '') { // Update meta field from variant price
+      } else {
+        console.log(`No update needed for ${volumeKey}`);
+      }
+
+      if (currentBase <= 0 && currentPrice > 0) { // Update meta field from variant price
         await updateProductMetafield(product.id, metafield.id, baseFromPrice);
         console.log(`Updated metafield value from ${volumeKey} to ${baseFromPrice}`); 
       }
-        else {
-        console.log(`No update needed for ${volumeKey}`);
-      }
+
     }
 
     res.status(200).send('Sync complete');
