@@ -129,23 +129,19 @@ module.exports = async (req, res) => {
         // Update price to match base
         await updateVariantPrice(variant.id, priceFromBase);
         console.log(`Updated price for ${volumeKey} to ${priceFromBase}`);
-      } else if (priceMismatch && !baseMismatch) {
-        // Update base to match price
-        await updateProductMetafield(product.id, metafield.id, baseFromPrice);
-        console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
-      } else if (priceMismatch && baseMismatch) {
+      } 
+      // else if (priceMismatch && !baseMismatch) {
+      //   // Update base to match price
+      //   console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
+      // } 
+      else if (priceMismatch && baseMismatch) {
         // Both are off — prioritize base price as source of truth
-        await updateVariantPrice(variant.id, priceFromBase);
+        await updateProductMetafield(product.id, metafield.id, baseFromPrice);
+        // await updateVariantPrice(variant.id, priceFromBase);
         console.log(`Forced price sync for ${volumeKey} to ${priceFromBase}`);
       } else {
         console.log(`No update needed for ${volumeKey}`);
       }
-
-      // if (currentBase <= 0 && currentPrice > 0) { // Update meta field from variant price
-        await updateProductMetafield(product.id, metafield.id, baseFromPrice);
-        console.log(`Updated metafield value from ${volumeKey} to ${baseFromPrice}`); 
-      // }
-
     }
 
     res.status(200).send('Sync complete');
