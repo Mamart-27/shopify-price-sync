@@ -67,26 +67,58 @@ module.exports = async (req, res) => {
   };
 
   // Update a product's metafield in Shopify.
-  const updateProductMetafield = async (metafield, newValue) => {
-    await axios.put(
-      `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/metafields/${metafield.id}.json`,
-      {
-        metafield: {
-          id: metafield.id,
-          namespace: metafield.namespace,
-          key: metafield.key,
-          type: metafield.type,
-          value: Number(newValue).toFixed(2),
+  const updateProductMetafield = async (metafieldId, newValue) => {
+    try {
+      const response = await axios.put(
+        `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/metafields/${metafieldId}.json`,
+        {
+          metafield: {
+            id: metafieldId,
+            value: Number(newValue).toFixed(2),
+          },
         },
-      },
-      {
-        headers: {
-          'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+        {
+          headers: {
+            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      console.log("✅ Metafield Update:", response.data.metafield);
+    } catch (error) {
+      console.error("❌ Metafield update failed:", error.response?.data || error.message);
+    }
   };
+
+
+  const addNewMetaFieldOnProduct = async (productId, value, namespace, key) => {
+    try {
+      const response = await axios.post(
+        `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`, 
+        {
+          metafield: {
+            namespace: namespace,
+            key: key,
+            type: 'number_decimal',
+            value: Number(value).toFixed(2),
+          }
+        },
+        {
+          headers: {
+            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+      const metafieldId = response.data.metafield?.id;
+      console.log("✅ Metafield Added:", response.data.metafield);
+      return metafieldId;
+    } catch (error) {
+      console.error("❌ Metafield Add failed:", error.response?.data || error.message);
+      return null;
+    }
+  };
+
 
   // Extract the volume key from variant titles, such as "50ml", "100ml", "2.5l".
   const extractVolumeKey = (title) => {
@@ -98,7 +130,7 @@ module.exports = async (req, res) => {
 
   try {
     const productData = await fetchProductData(product.id);
-    const metafields = await fetchProductMetafields(product.id);
+    let metafields = await fetchProductMetafields(product.id);
 
     for (const variant of productData.variants) {
       const volumeKey = extractVolumeKey(variant.title);
@@ -107,13 +139,20 @@ module.exports = async (req, res) => {
       const multiplier = VOLUME_MULTIPLIERS[volumeKey];
       const metafieldKey = getMetafieldKey(volumeKey);
 
-      const metafield = metafields.find(
+      let metafield = metafields.find(
         (mf) => mf.namespace === 'custom' && mf.key === metafieldKey
       );
 
       if (!metafield) {
-        console.warn(`Missing metafield "${metafieldKey}" for ${variant.title}`);
-        continue;
+        // console.warn(`Missing metafield "${metafieldKey}" for ${variant.title}`);
+        // continue;
+        const newMetaId = await addNewMetaFieldOnProduct(product.id, 0, 'custom', metafieldKey);
+        metafield = {
+          id: newMetaId,
+          namespace: 'custom',
+          key: metafieldKey,
+          value: parseFloat((0).toFixed(2))
+        };
       }
 
       const currentPrice = parseFloat(variant.price); // Current Price of the Product
@@ -131,9 +170,9 @@ module.exports = async (req, res) => {
         // Update price to match base
         await updateVariantPrice(variant.id, priceFromBase);
         console.log(`Updated price for ${volumeKey} to ${priceFromBase}`);
-      } else if (!currentBase && priceMismatch) {
+      } else if (currentBase===0 && priceMismatch) {
         // Update base to match price
-        await updateProductMetafield(metafield, baseFromPrice);
+        await updateProductMetafield(metafield.id, baseFromPrice);
         console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
       } else if (priceMismatch && baseMismatch) {
         // Both are off — prioritize base price as source of truth
