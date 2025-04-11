@@ -74,7 +74,7 @@ module.exports = async (req, res) => {
         metafield: {
           id: metafieldId,
           value: Number(newValue).toFixed(2),
-          "type": "number_decimal"
+          type: "number_decimal"
         },
       },
       {
