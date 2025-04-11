@@ -141,8 +141,7 @@ module.exports = async (req, res) => {
         console.log(`No update needed for ${volumeKey}`);
       }
 
-      await updateProductMetafield(metafield.id, baseFromPrice);
-      
+
     }
 
     res.status(200).send('Sync complete');
