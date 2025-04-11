@@ -86,7 +86,7 @@ module.exports = async (req, res) => {
       );
       console.log("✅ Metafield Update:", response.metafield);
     } catch (error) {
-      console.error("❌ Metafield update failed:", error.response || error.message);
+      console.error("❌ Metafield update failed:", error.response.statusText || error.message);
     }
   };
 
@@ -111,10 +111,10 @@ module.exports = async (req, res) => {
         }
       );
       const metafieldId = response.metafield?.id;
-      console.log("✅ Metafield Added:", response.metafield);
+      console.log("✅ Metafield Added:", response);
       return metafieldId;
     } catch (error) {
-      console.error("❌ Metafield Add failed:", error.response || error.message);
+      console.error("❌ Metafield Add failed:", error.response.statusText || error.message);
       return null;
     }
   };
