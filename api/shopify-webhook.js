@@ -67,14 +67,16 @@ module.exports = async (req, res) => {
   };
 
   // Update a product's metafield in Shopify.
-  const updateProductMetafield = async (metafieldId, newValue) => {
+  const updateProductMetafield = async (metafield, newValue) => {
     await axios.put(
       `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/metafields/${metafieldId}.json`,
       {
         metafield: {
-          id: metafieldId,
+          id: metafield.id,
+          namespace: metafield.namespace,
+          key: metafield.key,
+          type: metafield.type,
           value: Number(newValue).toFixed(2),
-          type: "number_decimal"
         },
       },
       {
@@ -128,10 +130,10 @@ module.exports = async (req, res) => {
       if (priceMismatch && !baseMismatch) {
         // Update price to match base
         await updateVariantPrice(variant.id, priceFromBase);
-        await updateProductMetafield(metafield.id, baseFromPrice);
         console.log(`Updated price for ${volumeKey} to ${priceFromBase}`);
       } else if (!currentBase && priceMismatch) {
         // Update base to match price
+        await updateProductMetafield(metafield, baseFromPrice);
         console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
       } else if (priceMismatch && baseMismatch) {
         // Both are off — prioritize base price as source of truth
@@ -141,6 +143,8 @@ module.exports = async (req, res) => {
         console.log(`No update needed for ${volumeKey}`);
       }
 
+
+      await updateProductMetafield(metafield, baseFromPrice);
 
     }
 
