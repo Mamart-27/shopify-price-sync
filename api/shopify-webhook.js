@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
   // Update a product's metafield in Shopify.
   const updateProductMetafield = async (metafield, newValue) => {
     await axios.put(
-      `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/metafields/${metafieldId}.json`,
+      `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/metafields/${metafieldId.id}.json`,
       {
         metafield: {
           id: metafield.id,
