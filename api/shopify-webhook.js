@@ -141,10 +141,10 @@ module.exports = async (req, res) => {
         console.log(`No update needed for ${volumeKey}`);
       }
 
-      // if (currentBase <= 0 && currentPrice > 0) { // Update meta field from variant price
-      //   await updateProductMetafield(product.id, metafield.id, baseFromPrice);
-      //   console.log(`Updated metafield value from ${volumeKey} to ${baseFromPrice}`); 
-      // }
+      if (currentBase <= 0 && currentPrice > 0) { // Update meta field from variant price
+        await updateProductMetafield(product.id, metafield.id, baseFromPrice);
+        console.log(`Updated metafield value from ${volumeKey} to ${baseFromPrice}`); 
+      }
 
     }
 
