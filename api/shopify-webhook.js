@@ -11,8 +11,6 @@ const VOLUME_MULTIPLIERS = {
   '10l': 0.1,  // 10L base price divided by 0.1 for the actual price of 1000ml.
 };
 
-console.log(VOLUME_MULTIPLIERS);
-
 // Function to derive the metafield key for each volume variant.
 const getMetafieldKey = (volumeKey) => {
   return `${volumeKey.replace('.', '_')}_base_price`;
@@ -115,8 +113,8 @@ module.exports = async (req, res) => {
         continue;
       }
 
-      const currentPrice = parseFloat(variant.price);
-      const currentBase = parseFloat(metafield.value);
+      const currentPrice = parseFloat(variant.price); // Current Price of the Product
+      const currentBase = parseFloat(metafield.value); // Current Value of the base price meta field
 
       // Calculate price from base and base from price using the multiplier.
       const priceFromBase = parseFloat((currentBase / multiplier).toFixed(2));
@@ -138,7 +136,11 @@ module.exports = async (req, res) => {
         // Both are off — prioritize base price as source of truth
         await updateVariantPrice(variant.id, priceFromBase);
         console.log(`Forced price sync for ${volumeKey} to ${priceFromBase}`);
-      } else {
+      } else if (currentBase <= 0 || currentBase === '') { // Update meta field from variant price
+        await updateProductMetafield(product.id, metafield.id, baseFromPrice);
+        console.log(`Updated metafield value from ${volumeKey} to ${baseFromPrice}`); 
+      }
+        else {
         console.log(`No update needed for ${volumeKey}`);
       }
     }
