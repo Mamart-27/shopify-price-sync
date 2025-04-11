@@ -128,10 +128,10 @@ module.exports = async (req, res) => {
       if (priceMismatch && !baseMismatch) {
         // Update price to match base
         await updateVariantPrice(variant.id, priceFromBase);
+        await updateProductMetafield(metafield.id, baseFromPrice);
         console.log(`Updated price for ${volumeKey} to ${priceFromBase}`);
       } else if (!currentBase && priceMismatch) {
         // Update base to match price
-        await updateProductMetafield(metafield.id, baseFromPrice);
         console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
       } else if (priceMismatch && baseMismatch) {
         // Both are off — prioritize base price as source of truth
