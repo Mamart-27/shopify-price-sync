@@ -84,9 +84,9 @@ module.exports = async (req, res) => {
           },
         }
       );
-      console.log("✅ Metafield Update:", response.data.metafield);
+      console.log("✅ Metafield Update:", response.metafield);
     } catch (error) {
-      console.error("❌ Metafield update failed:", error.response?.data || error.message);
+      console.error("❌ Metafield update failed:", error.response || error.message);
     }
   };
 
@@ -110,11 +110,11 @@ module.exports = async (req, res) => {
           }
         }
       );
-      const metafieldId = response.data.metafield?.id;
-      console.log("✅ Metafield Added:", response.data.metafield);
+      const metafieldId = response.metafield?.id;
+      console.log("✅ Metafield Added:", response.metafield);
       return metafieldId;
     } catch (error) {
-      console.error("❌ Metafield Add failed:", error.response?.data || error.message);
+      console.error("❌ Metafield Add failed:", error.response || error.message);
       return null;
     }
   };
