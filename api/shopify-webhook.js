@@ -182,7 +182,7 @@ module.exports = async (req, res) => {
       const baseMismatch = Math.abs(currentBase - baseFromPrice) > 0.01;
 
       console.log('priceFromBase', priceFromBase);
-      console.log('baseFromPrice', baseMismatch);
+      console.log('baseFromPrice', baseFromPrice);
 
       console.log('PriceMatch', priceMismatch);
       console.log('BaseMatch', baseMismatch);
