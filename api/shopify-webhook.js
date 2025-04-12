@@ -130,6 +130,14 @@ module.exports = async (req, res) => {
 
   try {
     const productData = await fetchProductData(product.id);
+
+    console.warn(`Webhook executed from ${productData.title} - ${productData.id} | ${productData.product_type}`);
+
+    if(productData.product_type !== 'Fragrance Oil') {
+      console.warn(`Product type is not Fragrance Oil: ${productData.product_type}`);
+      return res.status(200).send('Not a Fragrance Oil product, no sync needed');
+    }
+
     let metafields = await fetchProductMetafields(product.id);
 
     for (const variant of productData.variants) {
@@ -144,8 +152,7 @@ module.exports = async (req, res) => {
       );
 
       if (!metafield) {
-        // console.warn(`Missing metafield "${metafieldKey}" for ${variant.title}`);
-        // continue;
+        console.warn(`Missing metafield ${metafieldKey} | ${productData.title} for ${variant.title}, creating it...`);
         const newMetaId = await addNewMetaFieldOnProduct(product.id, 0, 'custom', metafieldKey);
         metafield = {
           id: newMetaId,
@@ -170,14 +177,19 @@ module.exports = async (req, res) => {
         // Update price to match base
         await updateVariantPrice(variant.id, priceFromBase);
         console.log(`Updated price for ${volumeKey} to ${priceFromBase}`);
+
       } else if (currentBase===0 && priceMismatch) {
+
         // Update base to match price
         await updateProductMetafield(metafield.id, baseFromPrice);
         console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
+
       } else if (priceMismatch && baseMismatch) {
+
         // Both are off — prioritize base price as source of truth
         await updateVariantPrice(variant.id, priceFromBase);
         console.log(`Forced price sync for ${volumeKey} to ${priceFromBase}`);
+        
       } else {
         console.log(`No update needed for ${volumeKey}`);
       }
