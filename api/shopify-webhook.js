@@ -141,6 +141,7 @@ module.exports = async (req, res) => {
     let metafields = await fetchProductMetafields(product.id);
 
     for (const variant of productData.variants) {
+      let isNewMetafield = false;
       const volumeKey = extractVolumeKey(variant.title);
       if (!volumeKey || !VOLUME_MULTIPLIERS[volumeKey]) continue;
 
@@ -154,6 +155,8 @@ module.exports = async (req, res) => {
       if (!metafield) {
         console.warn(`Missing metafield ${metafieldKey} | ${productData.title} for ${variant.title}, creating it...`);
         const newMetaId = await addNewMetaFieldOnProduct(product.id, 0, 'custom', metafieldKey);
+
+        isNewMetafield = true;
         metafield = {
           id: newMetaId,
           namespace: 'custom',
@@ -173,16 +176,21 @@ module.exports = async (req, res) => {
       const priceMismatch = Math.abs(currentPrice - priceFromBase) > 0.01;
       const baseMismatch = Math.abs(currentBase - baseFromPrice) > 0.01;
 
+      if(isNewMetafield){
+        await updateProductMetafield(metafield.id, baseFromPrice);
+        console.log(`Added Based Price for first time ${volumeKey} to ${baseFromPrice}`);
+      }
+
       if (priceMismatch && !baseMismatch) {
         // Update price to match base
         await updateVariantPrice(variant.id, priceFromBase);
-        console.log(`Updated price for ${volumeKey} to ${priceFromBase}`);
+        console.log(`Updated price for to match base price for ${volumeKey} to ${priceFromBase}`);
 
-      } else if (currentBase===0 && priceMismatch) {
+      } else if (!priceMismatch && baseMismatch) {
 
         // Update base to match price
         await updateProductMetafield(metafield.id, baseFromPrice);
-        console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
+        console.log(`Updated base price to match variant price for ${volumeKey} to ${baseFromPrice}`);
 
       } else if (priceMismatch && baseMismatch) {
 
@@ -193,6 +201,9 @@ module.exports = async (req, res) => {
       } else {
         console.log(`No update needed for ${volumeKey}`);
       }
+
+
+      if() 
 
     }
 
