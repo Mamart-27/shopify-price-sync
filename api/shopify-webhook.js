@@ -184,14 +184,13 @@ module.exports = async (req, res) => {
       if(isNewMetafield){ 
         await updateProductMetafield(metafield.id, baseFromPrice);
         console.log(`Added Based Price for first time ${volumeKey} to ${baseFromPrice}`);
-      } else if (priceMismatch && baseMismatch && !isNewMetafield) {// Both are off — prioritize base price as source of truth
-        await updateVariantPrice(variant.id, priceFromBase);
-        console.log(`Forced price sync for ${volumeKey} to ${priceFromBase}`);
       } else if (currentBase === 0 && priceMismatch && !isNewMetafield) {
         await updateProductMetafield(metafield.id, baseFromPrice);
         console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
-      }
-        else {
+      } else if (priceMismatch && baseMismatch && !isNewMetafield) {// Both are off — prioritize base price as source of truth
+        await updateVariantPrice(variant.id, priceFromBase);
+        console.log(`Forced price sync for ${volumeKey} to ${priceFromBase}`);
+      } else {
         console.log(`No update needed for ${volumeKey}`);
       }
 
