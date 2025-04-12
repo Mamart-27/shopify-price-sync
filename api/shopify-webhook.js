@@ -128,6 +128,8 @@ module.exports = async (req, res) => {
     return `${amount}${unit}`; // e.g., "50ml" or "2.5l"
   };
 
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
   try {
     const productData = await fetchProductData(product.id);
 
@@ -141,7 +143,6 @@ module.exports = async (req, res) => {
     let metafields = await fetchProductMetafields(product.id);
 
     for (const variant of productData.variants) {
-      let isNewMetafield = false;
       const volumeKey = extractVolumeKey(variant.title);
       if (!volumeKey || !VOLUME_MULTIPLIERS[volumeKey]) continue;
 
@@ -155,44 +156,48 @@ module.exports = async (req, res) => {
       if (!metafield) {
         console.warn(`Missing metafield ${metafieldKey} | ${productData.title} for ${variant.title}, creating it...`);
         const newMetaId = await addNewMetaFieldOnProduct(product.id, 0, 'custom', metafieldKey);
-
-        isNewMetafield = true;
         metafield = {
           id: newMetaId,
           namespace: 'custom',
           key: metafieldKey,
           value: parseFloat((0).toFixed(2))
         };
+        await sleep(500);
       }
+
       const currentPrice = parseFloat(variant.price); // Current Price of the Product
       const currentBase = parseFloat(metafield.value); // Current Value of the base price meta field
 
-      const rawPriceFromBase = currentBase / multiplier;
-      const rawBaseFromPrice = currentPrice * multiplier;
-
       // Calculate price from base and base from price using the multiplier.
-      const priceFromBase = parseFloat(rawPriceFromBase.toFixed(2));
-      const baseFromPrice = parseFloat(rawBaseFromPrice.toFixed(2));
+      const priceFromBase = parseFloat((currentBase / multiplier).toFixed(2));
+      const baseFromPrice = parseFloat((currentPrice * multiplier).toFixed(2));
 
       // Check if there is a price mismatch and base mismatch.
       const priceMismatch = Math.abs(currentPrice - priceFromBase) > 0.01;
       const baseMismatch = Math.abs(currentBase - baseFromPrice) > 0.01;
 
-      if(isNewMetafield){ 
-        await updateProductMetafield(metafield.id, baseFromPrice);
-        console.log(`Added Based Price for first time ${volumeKey} to ${baseFromPrice}`);
-      } else if (priceMismatch && !baseMismatch) {// Update price to match base
+      if (priceMismatch && !baseMismatch) {
+        // Update price to match base
         await updateVariantPrice(variant.id, priceFromBase);
-        console.log(`Updated price for to match base price for ${volumeKey} to ${priceFromBase}`);
-      } else if (!priceMismatch && baseMismatch) {// Update base to match price
+        console.log(`Updated price for ${volumeKey} to ${priceFromBase}`);
+
+      } else if (currentBase===0 || (priceMismatch && baseMismatch)) {
+
+        // Update base to match price
         await updateProductMetafield(metafield.id, baseFromPrice);
-        console.log(`Updated base price to match variant price for ${volumeKey} to ${baseFromPrice}`);
-      } else if (priceMismatch && baseMismatch) {// Both are off — prioritize base price as source of truth
+        console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
+
+      } else if (priceMismatch && baseMismatch && priceFromBase > 0) {
+
+        // Both are off — prioritize base price as source of truth
         await updateVariantPrice(variant.id, priceFromBase);
         console.log(`Forced price sync for ${volumeKey} to ${priceFromBase}`);
+        
       } else {
         console.log(`No update needed for ${volumeKey}`);
       }
+
+      await sleep(300);
     }
 
     res.status(200).send('Sync complete');
