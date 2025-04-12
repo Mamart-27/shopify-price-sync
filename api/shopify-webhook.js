@@ -111,7 +111,7 @@ module.exports = async (req, res) => {
         }
       );
       const metafieldId = response.metafield?.id;
-      console.log("✅ Metafield Added:", response.data?.metafield);
+      console.log("✅ Metafield Added:", metafieldId);
       return metafieldId;
     } catch (error) {
       console.error("❌ Metafield Add failed:", error.response.statusText || error.message);
