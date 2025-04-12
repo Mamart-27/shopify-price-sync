@@ -143,6 +143,7 @@ module.exports = async (req, res) => {
     let metafields = await fetchProductMetafields(product.id);
 
     for (const variant of productData.variants) {
+      let isNewMetafield = false;
       const volumeKey = extractVolumeKey(variant.title);
       if (!volumeKey || !VOLUME_MULTIPLIERS[volumeKey]) continue;
 
@@ -162,6 +163,7 @@ module.exports = async (req, res) => {
           key: metafieldKey,
           value: parseFloat((0).toFixed(2))
         };
+        isNewMetafield = true;
         await sleep(500);
       }
 
