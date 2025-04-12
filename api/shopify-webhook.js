@@ -181,22 +181,10 @@ module.exports = async (req, res) => {
       const priceMismatch = Math.abs(currentPrice - priceFromBase) > 0.01;
       const baseMismatch = Math.abs(currentBase - baseFromPrice) > 0.01;
 
-      console.log('priceFromBase', priceFromBase);
-      console.log('baseFromPrice', baseFromPrice);
-
-      console.log('PriceMatch', priceMismatch);
-      console.log('BaseMatch', baseMismatch);
-
       if(isNewMetafield){ 
         await updateProductMetafield(metafield.id, baseFromPrice);
         console.log(`Added Based Price for first time ${volumeKey} to ${baseFromPrice}`);
-      } else if (priceMismatch && !baseMismatch) {// Update price to match base
-        await updateVariantPrice(variant.id, priceFromBase);
-        console.log(`Updated price for to match base price for ${volumeKey} to ${priceFromBase}`);
-      } else if (!priceMismatch && baseMismatch) {// Update base to match price
-        await updateProductMetafield(metafield.id, baseFromPrice);
-        console.log(`Updated base price to match variant price for ${volumeKey} to ${baseFromPrice}`);
-      } else if (priceMismatch && baseMismatch && priceFromBase > 0) {// Both are off — prioritize base price as source of truth
+      } else if (priceMismatch && baseMismatch && !isNewMetafield) {// Both are off — prioritize base price as source of truth
         await updateVariantPrice(variant.id, priceFromBase);
         console.log(`Forced price sync for ${volumeKey} to ${priceFromBase}`);
       } else {
