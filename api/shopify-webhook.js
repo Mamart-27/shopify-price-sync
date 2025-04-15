@@ -17,7 +17,9 @@ const getMetafieldKey = (volumeKey) => {
 };
 
 // Main function to process the product variants and update prices.
-module.exports = async (req, res) => {
+// module.exports = async (req, res) => {
+  export default async function handler(req, res) {
+
   if (req.method !== 'POST') {
     return res.status(405).send('Method Not Allowed');
   }
