@@ -137,7 +137,7 @@ const getMetafieldKey = (volumeKey) => {
 
     console.warn(`Webhook executed from ${productData.title} - ${productData.id} | ${productData.product_type}`);
 
-    if(productData.product_type !== 'Fragrance Oil') {
+    if(productData.product_type !== 'Fragrance Oil' && productData.id !== 8649373319330) {
       console.warn(`Product type is not Fragrance Oil: ${productData.product_type}`);
       return res.status(200).send('Not a Fragrance Oil product, no sync needed');
     }
