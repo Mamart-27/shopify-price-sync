@@ -70,7 +70,7 @@ module.exports = async (req, res) => {
   // Update a product's metafield in Shopify.
   const updateProductMetafield = async (metafieldId, newValue) => {
     try {
-      const response = await axios.put(
+      await axios.put(
         `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/metafields/${metafieldId}.json`,
         {
           metafield: {
@@ -85,7 +85,7 @@ module.exports = async (req, res) => {
           },
         }
       );
-      console.log("✅ Metafield Update:", response.metafield);
+      console.log("✅ Metafield Updated Successfully");
     } catch (error) {
       console.error("❌ Metafield update failed:", error.response.statusText || error.message);
     }
@@ -94,7 +94,7 @@ module.exports = async (req, res) => {
 
   const addNewMetaFieldOnProduct = async (productId, value, namespace, key) => {
     try {
-      const response = await axios.post(
+      await axios.post(
         `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`, 
         {
           metafield: {
@@ -111,9 +111,7 @@ module.exports = async (req, res) => {
           }
         }
       );
-      const metafieldId = response.metafield?.id;
-      console.log("✅ Metafield Added:", metafieldId);
-      return metafieldId;
+      console.log("✅ Metafield Added Successfully");
     } catch (error) {
       console.error("❌ Metafield Add failed:", error.response.statusText || error.message);
       return null;
@@ -142,7 +140,6 @@ module.exports = async (req, res) => {
     let metafields = await fetchProductMetafields(product.id);
 
     for (const variant of productData.variants) {
-      let isNewMetafield = false;
       const volumeKey = extractVolumeKey(variant.title);
       if (!volumeKey || !VOLUME_MULTIPLIERS[volumeKey]) continue;
 
@@ -155,14 +152,8 @@ module.exports = async (req, res) => {
 
       if (!metafield) {
         console.warn(`Missing metafield ${metafieldKey} | ${productData.title} for ${variant.title}, creating it...`);
-        const newMetaId = await addNewMetaFieldOnProduct(product.id, 0, 'custom', metafieldKey);
-        metafield = {
-          id: newMetaId,
-          namespace: 'custom',
-          key: metafieldKey,
-          value: parseFloat((0).toFixed(2))
-        };
-        isNewMetafield = true;
+        await addNewMetaFieldOnProduct(product.id, 0, 'custom', metafieldKey);
+        continue; // Skip to the next variant if metafield creation fails.
       }
 
       const currentPrice = parseFloat(variant.price); // Current Price of the Product
@@ -179,13 +170,10 @@ module.exports = async (req, res) => {
       const priceMismatch = Math.abs(currentPrice - priceFromBase) > 0.01;
       const baseMismatch = Math.abs(currentBase - baseFromPrice) > 0.01;
 
-      if(isNewMetafield){ 
-        await updateProductMetafield(metafield.id, baseFromPrice);
-        console.log(`Added Based Price for first time ${volumeKey} to ${baseFromPrice}`);
-      } else if (currentBase === 0 && priceMismatch && !isNewMetafield) {
+      if (currentBase===0) {
         await updateProductMetafield(metafield.id, baseFromPrice);
         console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
-      } else if (priceMismatch && baseMismatch && !isNewMetafield) {// Both are off — prioritize base price as source of truth
+      } else if (priceMismatch && baseMismatch) {// Both are off — prioritize base price as source of truth
         await updateVariantPrice(variant.id, priceFromBase);
         console.log(`Forced price sync for ${volumeKey} to ${priceFromBase}`);
       } else {
