@@ -17,8 +17,7 @@ const getMetafieldKey = (volumeKey) => {
 };
 
 // Main function to process the product variants and update prices.
-// module.exports = async (req, res) => {
-  export default async function handler(req, res) {
+module.exports = async (req, res) => {
 
   if (req.method !== 'POST') {
     return res.status(405).send('Method Not Allowed');
@@ -130,8 +129,6 @@ const getMetafieldKey = (volumeKey) => {
     return `${amount}${unit}`; // e.g., "50ml" or "2.5l"
   };
 
-  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
   try {
     const productData = await fetchProductData(product.id);
 
@@ -166,7 +163,6 @@ const getMetafieldKey = (volumeKey) => {
           value: parseFloat((0).toFixed(2))
         };
         isNewMetafield = true;
-        await sleep(500);
       }
 
       const currentPrice = parseFloat(variant.price); // Current Price of the Product
@@ -195,8 +191,6 @@ const getMetafieldKey = (volumeKey) => {
       } else {
         console.log(`No update needed for ${volumeKey}`);
       }
-
-      await sleep(300);
     }
 
     res.status(200).send('Sync complete');
