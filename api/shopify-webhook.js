@@ -132,7 +132,7 @@ module.exports = async (req, res) => {
 
     console.warn(`Webhook executed from ${productData.title} - ${productData.id} | ${productData.product_type}`);
 
-    if(productData.product_type !== 'Fragrance Oil' && productData.id !== 8649373319330) {
+    if(productData.product_type !== 'Fragrance Oil') {
       console.warn(`Product type is not Fragrance Oil: ${productData.product_type}`);
       return res.status(200).send('Not a Fragrance Oil product, no sync needed');
     }
@@ -173,9 +173,9 @@ module.exports = async (req, res) => {
       if (currentBase===0) {
         await updateProductMetafield(metafield.id, baseFromPrice);
         console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
-      } else if (priceMismatch && baseMismatch) {// Both are off — prioritize base price as source of truth
+      } else if (priceMismatch && baseMismatch) {
         await updateVariantPrice(variant.id, priceFromBase);
-        console.log(`Forced price sync for ${volumeKey} to ${priceFromBase}`);
+        console.log(`Variant price sync for ${volumeKey} to ${priceFromBase}`);
       } else {
         console.log(`No update needed for ${volumeKey}`);
       }
