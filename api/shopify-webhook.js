@@ -1,13 +1,6 @@
-import { buffer } from 'micro';
-import axios from 'axios';
+const axios = require('axios');
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-// Keep your volume multipliers, helper functions, etc. here (unchanged)
+// Define volume multipliers for each variant size.
 const VOLUME_MULTIPLIERS = {
   '50ml': 20,
   '100ml': 10,
@@ -18,50 +11,65 @@ const VOLUME_MULTIPLIERS = {
   '10l': 0.1,
 };
 
-const getMetafieldKey = (volumeKey) => `${volumeKey.replace('.', '_')}_base_price`;
+const getMetafieldKey = (volumeKey) => {
+  return `${volumeKey.replace('.', '_')}_base_price`;
+};
 
-// Start of main handler
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).send('Method Not Allowed');
+  }
 
-  try {
-    const rawBody = await buffer(req);
-    const product = JSON.parse(rawBody.toString());
+  const product = req.body;
 
-    // your fetch/update functions can stay the same as you had them
+  const fetchProductData = async (productId) => {
+    const { data } = await axios.get(
+      `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}.json`,
+      {
+        headers: {
+          'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+        },
+      }
+    );
+    return data.product;
+  };
 
-    // (PASTE all your existing logic here — except the first `module.exports` line, remove that)
+  const fetchProductMetafields = async (productId) => {
+    const { data } = await axios.get(
+      `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`,
+      {
+        headers: {
+          'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+        },
+      }
+    );
+    return data.metafields;
+  };
 
-    // Fetch product data, metafields, etc.
-    const fetchProductData = async (productId) => {
-      const { data } = await axios.get(
-        `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}.json`,
-        {
-          headers: {
-            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
-          },
-        }
-      );
-      return data.product;
-    };
+  const updateVariantPrice = async (variantId, newPrice) => {
+    await axios.put(
+      `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/variants/${variantId}.json`,
+      {
+        variant: { id: variantId, price: newPrice.toFixed(2) },
+      },
+      {
+        headers: {
+          'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  };
 
-    const fetchProductMetafields = async (productId) => {
-      const { data } = await axios.get(
-        `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`,
-        {
-          headers: {
-            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
-          },
-        }
-      );
-      return data.metafields;
-    };
-
-    const updateVariantPrice = async (variantId, newPrice) => {
+  const updateProductMetafield = async (metafieldId, newValue) => {
+    try {
       await axios.put(
-        `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/variants/${variantId}.json`,
+        `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/metafields/${metafieldId}.json`,
         {
-          variant: { id: variantId, price: newPrice.toFixed(2) },
+          metafield: {
+            id: metafieldId,
+            value: Number(newValue).toFixed(2),
+          },
         },
         {
           headers: {
@@ -70,64 +78,45 @@ export default async function handler(req, res) {
           },
         }
       );
-    };
+      console.log("✅ Metafield Updated Successfully");
+    } catch (error) {
+      console.error("❌ Metafield update failed:", error.response?.statusText || error.message);
+    }
+  };
 
-    const updateProductMetafield = async (metafieldId, newValue) => {
-      try {
-        await axios.put(
-          `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/metafields/${metafieldId}.json`,
-          {
-            metafield: {
-              id: metafieldId,
-              value: Number(newValue).toFixed(2),
-            },
-          },
-          {
-            headers: {
-              'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
-              'Content-Type': 'application/json',
-            },
+  const addNewMetaFieldOnProduct = async (productId, value, namespace, key) => {
+    try {
+      await axios.post(
+        `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`,
+        {
+          metafield: {
+            namespace,
+            key,
+            type: 'number_decimal',
+            value: Number(value).toFixed(2),
           }
-        );
-        console.log("✅ Metafield Updated Successfully");
-      } catch (error) {
-        console.error("❌ Metafield update failed:", error.response?.statusText || error.message);
-      }
-    };
-
-    const addNewMetaFieldOnProduct = async (productId, value, namespace, key) => {
-      try {
-        await axios.post(
-          `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`,
-          {
-            metafield: {
-              namespace: namespace,
-              key: key,
-              type: 'number_decimal',
-              value: Number(value).toFixed(2),
-            }
-          },
-          {
-            headers: {
-              'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
-              'Content-Type': 'application/json',
-            }
+        },
+        {
+          headers: {
+            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+            'Content-Type': 'application/json',
           }
-        );
-        console.log("✅ Metafield Added Successfully");
-      } catch (error) {
-        console.error("❌ Metafield Add failed:", error.response?.statusText || error.message);
-      }
-    };
+        }
+      );
+      console.log("✅ Metafield Added Successfully");
+    } catch (error) {
+      console.error("❌ Metafield Add failed:", error.response?.statusText || error.message);
+    }
+  };
 
-    const extractVolumeKey = (title) => {
-      const match = title.toLowerCase().replace(/\s+/g, '').match(/([\d.]+)(ml|l)/);
-      if (!match) return null;
-      const [_, amount, unit] = match;
-      return `${amount}${unit}`;
-    };
+  const extractVolumeKey = (title) => {
+    const match = title.toLowerCase().replace(/\s+/g, '').match(/([\d.]+)(ml|l)/);
+    if (!match) return null;
+    const [_, amount, unit] = match;
+    return `${amount}${unit}`;
+  };
 
-    // Main Logic
+  try {
     const productData = await fetchProductData(product.id);
     console.warn(`Webhook executed from ${productData.title} - ${productData.id} | ${productData.product_type}`);
 
@@ -179,9 +168,8 @@ export default async function handler(req, res) {
     }
 
     res.status(200).send('Sync complete');
-
-  } catch (err) {
-    console.error('Sync failed:', err.message);
+  } catch (error) {
+    console.error('Sync failed:', error.message);
     res.status(500).send('Sync failed');
   }
-}
+};
