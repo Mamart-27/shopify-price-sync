@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/Mamart-27/shopify-price-sync#readme",
   "dependencies": {
-    "axios": "^1.8.4"
+    "axios": "^1.6.7",
+    "micro": "^9.3.4"
   }
+  
 }
