@@ -35,6 +35,7 @@ module.exports = async (req, res) => {
         },
       }
     );
+    console.log("Product payload received:", req.body);
     return data.product;
   };
 
