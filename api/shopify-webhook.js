@@ -124,13 +124,13 @@ module.exports = async (req, res) => {
     const match = title.toLowerCase().replace(/\s+/g, '').match(/([\d.]+)(ml|l)/);
     if (!match) return null;
     const [_, amount, unit] = match;
-    return ${amount}${unit}; // e.g., "50ml" or "2.5l"
+    return `${amount}${unit}`; // e.g., "50ml" or "2.5l"
   };
 
   try {
     const productData = await fetchProductData(product.id);
 
-    console.warn(Webhook executed from ${productData.title} - ${productData.id} | ${productData.product_type});
+    console.warn(`Webhook executed from ${productData.title} - ${productData.id} | ${productData.product_type}`);
 
     if(productData.product_type !== 'Fragrance Oil') {
       console.warn(Product type is not Fragrance Oil: ${productData.product_type});
@@ -151,7 +151,7 @@ module.exports = async (req, res) => {
       );
 
       if (!metafield) {
-        console.warn(Missing metafield ${metafieldKey} | ${productData.title} for ${variant.title}, creating it...);
+        console.warn(`Missing metafield ${metafieldKey} | ${productData.title} for ${variant.title}, creating it...`);
         await addNewMetaFieldOnProduct(product.id, 0, 'custom', metafieldKey);
         continue; // Skip to the next variant if metafield creation fails.
       }
@@ -172,12 +172,12 @@ module.exports = async (req, res) => {
 
       if (currentBase===0) {
         await updateProductMetafield(metafield.id, baseFromPrice);
-        console.log(Updated base price for ${volumeKey} to ${baseFromPrice});
+        console.log(`Updated base price for ${volumeKey} to ${baseFromPrice}`);
       } else if (priceMismatch && baseMismatch) {
         await updateVariantPrice(variant.id, priceFromBase);
-        console.log(Variant price sync for ${volumeKey} to ${priceFromBase});
+        console.log(`Variant price sync for ${volumeKey} to ${priceFromBase}`);
       } else {
-        console.log(No update needed for ${volumeKey});
+        console.log(`No update needed for ${volumeKey}`);
       }
     }
 
