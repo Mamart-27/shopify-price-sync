@@ -13,7 +13,7 @@ const VOLUME_MULTIPLIERS = {
 
 // Function to derive the metafield key for each volume variant.
 const getMetafieldKey = (volumeKey) => {
-  return ${volumeKey.replace('.', '_')}_base_price;
+  return `${volumeKey.replace('.', '_')}_base_price`;
 };
 
 // Main function to process the product variants and update prices.
