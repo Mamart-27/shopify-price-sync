@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/Mamart-27/shopify-price-sync#readme",
   "dependencies": {
-    "axios": "^1.9.0"
+    "axios": "^1.9.0",
+    "raw-body": "^3.0.0"
   }
 }
