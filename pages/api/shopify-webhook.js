@@ -16,6 +16,19 @@ const getMetafieldKey = (volumeKey) => {
   return `${volumeKey.replace('.', '_')}_base_price`;
 };
 
+// /pages/api/shopify-webhook.js
+
+export default async function handler(req, res) {
+  console.log("Webhook hit:", new Date().toISOString());
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method Not Allowed' });
+  }
+
+  res.status(200).json({ message: 'Webhook received' });
+}
+
+
 // Main function to process the product variants and update prices.
 module.exports = async (req, res) => {
 
