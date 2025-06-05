@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "builds": [
+    { "src": "api/shopify-webhook.js", "use": "@vercel/node" }
+  ],
   "routes": [
     { "src": "/shopify-webhook", "dest": "/api/shopify-webhook.js" }
   ]
