@@ -1,5 +1,6 @@
 const axios = require('axios');
 
-module.exports = async (req, res) => {
-  res.status(200).json({ axiosVersion: require('axios/package.json').version });
+// api/test.js
+module.exports = (req, res) => {
+  res.status(200).json({ message: "✅ Test route working!" });
 };
