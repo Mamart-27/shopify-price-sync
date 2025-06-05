@@ -1,9 +1,8 @@
-module.exports = async (req, res) => {
-  if (req.method !== 'POST') {
-    return res.status(405).send('Method Not Allowed');
-  }
-
-  console.log("🔥 Incoming Shopify webhook:", JSON.stringify(req.body, null, 2));
+module.exports.config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
   // ... rest of your code
 
