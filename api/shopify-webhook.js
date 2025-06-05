@@ -16,7 +16,6 @@ const getMetafieldKey = (volumeKey) => {
   return `${volumeKey.replace('.', '_')}_base_price`;
 };
 
-
 // Main function to process the product variants and update prices.
 module.exports = async (req, res) => {
 
@@ -36,7 +35,6 @@ module.exports = async (req, res) => {
         },
       }
     );
-    console.log("Product payload received:", req.body);
     return data.product;
   };
 
