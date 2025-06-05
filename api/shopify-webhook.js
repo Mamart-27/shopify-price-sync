@@ -10,13 +10,6 @@ module.exports = async (req, res) => {
 const axios = require('axios');
 const getRawBody = require('raw-body');
 
-// Vercel-specific config to disable automatic JSON parsing
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 // Volume multipliers
 const VOLUME_MULTIPLIERS = {
   '50ml': 20,
