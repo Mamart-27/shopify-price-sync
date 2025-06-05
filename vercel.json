@@ -4,6 +4,6 @@
     { "src": "/api/shopify-webhook.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/api/shopify-webhook", "dest": "/api/shopify-webhook.js" }
+    { "src": "/shopify-webhook", "dest": "/api/shopify-webhook.js" }
   ]
 }
