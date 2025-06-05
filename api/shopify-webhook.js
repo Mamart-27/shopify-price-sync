@@ -1,11 +1,3 @@
-module.exports.config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-  // ... rest of your code
-
 const axios = require('axios');
 const getRawBody = require('raw-body');
 
@@ -184,4 +176,10 @@ module.exports = async (req, res) => {
     console.error('🔥 Sync failed:', error.message);
     res.status(500).send('Internal Server Error');
   }
+};
+
+module.exports.config = {
+  api: {
+    bodyParser: false,
+  },
 };
