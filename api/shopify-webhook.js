@@ -12,8 +12,9 @@ const VOLUME_MULTIPLIERS = {
   '10l': 0.1,
 };
 
-const SHOP_DOMAIN = scentmethod.myshopify.com;
-const SHOPIFY_ACCESS_TOKEN = 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;
+const SHOP_DOMAIN = process.env.SHOP_DOMAIN;
+const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
+
 
 const getMetafieldKey = (volumeKey) => `${volumeKey.replace('.', '_')}_base_price`;
 
