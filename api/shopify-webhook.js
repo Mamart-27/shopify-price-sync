@@ -12,69 +12,18 @@ const VOLUME_MULTIPLIERS = {
   '10l': 0.1,
 };
 
-const SHOP_DOMAIN = process.env.SHOP_DOMAIN;
-const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
-
-
+// Helper functions
 const getMetafieldKey = (volumeKey) => `${volumeKey.replace('.', '_')}_base_price`;
 
 const extractVolumeKey = (title) => {
   const match = title.toLowerCase().replace(/\s+/g, '').match(/([\d.]+)(ml|l)/);
-  return match ? `${match[1]}${match[2]}` : null;
-};
-
-const fetchProductData = async (productId) => {
-  const { data } = await axios.get(
-    `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}.json`,
-    {
-      headers: {
-        'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
-      },
-    }
-  );
-  return data.product;
-};
-
-const fetchProductMetafields = async (productId) => {
-  const { data } = await axios.get(
-    `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`,
-    {
-      headers: {
-        'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
-      },
-    }
-  );
-  return data.metafields;
-};
-
-const addOrUpdateMetafield = async ({ productId, key, value, existingId = null }) => {
-  const endpoint = existingId
-    ? `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/metafields/${existingId}.json`
-    : `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`;
-
-  const method = existingId ? 'put' : 'post';
-
-  const payload = {
-    metafield: {
-      ...(existingId ? { id: existingId } : { namespace: 'custom', key }),
-      type: 'number_decimal',
-      value: Number(value).toFixed(2),
-    },
-  };
-
-  await axios[method](endpoint, payload, {
-    headers: {
-      'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  console.log(`${existingId ? '🔁 Updated' : '➕ Created'} metafield ${key}: ${value}`);
+  if (!match) return null;
+  return `${match[1]}${match[2]}`;
 };
 
 module.exports = async (req, res) => {
   if (req.method === 'GET') {
-    return res.status(200).json({ message: 'Webhook is live' });
+    return res.status(200).json({ message: 'Webhook endpoint is live' });
   }
 
   if (req.method !== 'POST') {
@@ -82,15 +31,110 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Get raw body from Shopify
     const rawBody = await getRawBody(req);
-    const product = JSON.parse(rawBody.toString('utf8'));
+    const body = JSON.parse(rawBody.toString('utf8'));
+    const product = body;
 
-    console.log('🔔 Webhook triggered for product:', product.id);
+    console.log('🔔 Webhook triggered');
+    console.log('📦 Product ID:', product.id);
+    console.log('Shop domain:', process.env.SHOP_DOMAIN);
+
+
+    // Fetch full product details
+    const fetchProductData = async (productId) => {
+      const { data } = await axios.get(
+        `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}.json`,
+        {
+          headers: {
+            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+          },
+        }
+      );
+      return data.product;
+    };
+
+    const fetchProductMetafields = async (productId) => {
+      const { data } = await axios.get(
+        `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`,
+        {
+          headers: {
+            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+          },
+        }
+      );
+      return data.metafields;
+    };
+
+    const updateVariantPrice = async (variantId, newPrice) => {
+      await axios.put(
+        `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/variants/${variantId}.json`,
+        { variant: { id: variantId, price: newPrice.toFixed(2) } },
+        {
+          headers: {
+            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      console.log(`💸 Updated variant ${variantId} price to ${newPrice}`);
+    };
+
+    const updateProductMetafield = async (metafieldId, newValue) => {
+      try {
+        await axios.put(
+          `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/metafields/${metafieldId}.json`,
+          {
+            metafield: {
+              id: metafieldId,
+              value: Number(newValue).toFixed(2),
+            },
+          },
+          {
+            headers: {
+              'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        console.log("✅ Metafield updated");
+      } catch (error) {
+        console.error("❌ Metafield update failed:", error?.response?.data || error.message);
+      }
+    };
+
+    const addNewMetaFieldOnProduct = async (productId, value, namespace, key) => {
+      try {
+        await axios.post(
+          `https://${process.env.SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`,
+          {
+            metafield: {
+              namespace: namespace,
+              key: key,
+              type: 'number_decimal',
+              value: Number(value).toFixed(2),
+            },
+          },
+          {
+            headers: {
+              'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        console.log("✅ Metafield added");
+      } catch (error) {
+        console.error("❌ Metafield add failed:", error?.response?.data || error.message);
+      }
+    };
 
     const productData = await fetchProductData(product.id);
 
+    console.log(`🎯 Processing: ${productData.title} (${productData.product_type})`);
+
     if (productData.product_type !== 'Fragrance Oil') {
-      return res.status(200).send('Not Fragrance Oil – skipping');
+      console.log('⚠️ Skipping non-Fragrance Oil product');
+      return res.status(200).send('Skipped - Not Fragrance Oil');
     }
 
     const metafields = await fetchProductMetafields(product.id);
@@ -98,29 +142,44 @@ module.exports = async (req, res) => {
     for (const variant of productData.variants) {
       const volumeKey = extractVolumeKey(variant.title);
       if (!volumeKey || !VOLUME_MULTIPLIERS[volumeKey]) {
-        console.log(`⏭️ Skipping variant: ${variant.title}`);
+        console.log(`⛔ Skipping variant: ${variant.title}`);
         continue;
       }
 
       const multiplier = VOLUME_MULTIPLIERS[volumeKey];
-      const basePrice = parseFloat(variant.price) * multiplier;
       const metafieldKey = getMetafieldKey(volumeKey);
 
-      const existing = metafields.find(
+      let metafield = metafields.find(
         (mf) => mf.namespace === 'custom' && mf.key === metafieldKey
       );
 
-      await addOrUpdateMetafield({
-        productId: product.id,
-        key: metafieldKey,
-        value: basePrice,
-        existingId: existing?.id || null,
-      });
+      if (!metafield) {
+        console.log(`🆕 Creating metafield ${metafieldKey}`);
+        await addNewMetaFieldOnProduct(product.id, 0, 'custom', metafieldKey);
+        continue; // Skip for now
+      }
+
+      const currentPrice = parseFloat(variant.price);
+      const currentBase = parseFloat(metafield.value);
+
+      const priceFromBase = parseFloat((currentBase / multiplier).toFixed(2));
+      const baseFromPrice = parseFloat((currentPrice * multiplier).toFixed(2));
+
+      const priceMismatch = Math.abs(currentPrice - priceFromBase) > 0.01;
+      const baseMismatch = Math.abs(currentBase - baseFromPrice) > 0.01;
+
+      if (currentBase === 0) {
+        await updateProductMetafield(metafield.id, baseFromPrice);
+      } else if (priceMismatch && baseMismatch) {
+        await updateVariantPrice(variant.id, priceFromBase);
+      } else {
+        console.log(`✅ ${volumeKey}: No update needed`);
+      }
     }
 
-    res.status(200).send('Metafields updated from variant prices');
+    res.status(200).send('Sync complete');
   } catch (error) {
-    console.error('🔥 Sync failed:', error?.response?.data || error.message);
+    console.error('🔥 Sync failed:', error.message);
     res.status(500).send('Internal Server Error');
   }
 };
