@@ -153,11 +153,26 @@ module.exports = async (req, res) => {
         (mf) => mf.namespace === 'custom' && mf.key === metafieldKey
       );
 
-      if (!metafield) {
-        console.log(`🆕 Creating metafield ${metafieldKey}`);
-        await addNewMetaFieldOnProduct(product.id, 0, 'custom', metafieldKey);
-        continue; // Skip for now
+      // if (!metafield) {
+      //   console.log(`🆕 Creating metafield ${metafieldKey}`);
+      //   await addNewMetaFieldOnProduct(product.id, 0, 'custom', metafieldKey);
+      //   continue; // Skip for now
+      // }
+      const existing = metafields.find(
+        (mf) => mf.namespace === 'custom' && mf.key === key
+      );
+      if (existing) {
+        console.log(`⚠️ Metafield ${key} already exists, skipping`);
+        return;
       }
+
+      if (!metafield) {
+        const baseFromPrice = parseFloat((currentPrice * multiplier).toFixed(2));
+        console.log(`🆕 Creating metafield ${metafieldKey} with base price: ${baseFromPrice}`);
+        await addNewMetaFieldOnProduct(product.id, baseFromPrice, 'custom', metafieldKey);
+        continue;
+      }
+
 
       const currentPrice = parseFloat(variant.price);
       const currentBase = parseFloat(metafield.value);
