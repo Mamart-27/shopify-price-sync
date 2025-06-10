@@ -43,6 +43,8 @@ module.exports = async (req, res) => {
     console.log('📦 Product ID:', product.id);
     console.log('Shop domain:', SHOP_DOMAIN);
     console.log('Shop Token:', process.env.SHOPIFY_ACCESS_TOKEN);
+    console.log(`🧪 Requesting: https://${SHOP_DOMAIN}/admin/api/2025-04/products/${product.id}.json`);
+
 
 
     // Fetch full product details
