@@ -130,7 +130,6 @@ module.exports = async (req, res) => {
     };
 
     const productData = await fetchProductData(product.id);
-
     console.log(`🎯 Processing: ${productData.title} (${productData.product_type})`);
 
     if (productData.product_type !== 'Fragrance Oil') {
