@@ -131,7 +131,6 @@ module.exports = async (req, res) => {
     };
 
     // const productData = await fetchProductData(product.id);
-    const product = body; 
 
     console.log(`🎯 Processing: ${productData.title} (${productData.product_type})`);
 
