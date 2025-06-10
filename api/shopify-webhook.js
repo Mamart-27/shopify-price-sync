@@ -12,8 +12,6 @@ const VOLUME_MULTIPLIERS = {
   '10l': 0.1,
 };
 
-const SHOP_DOMAIN = scentmethod.myshopify.com;
-
 const getMetafieldKey = (volumeKey) => `${volumeKey.replace('.', '_')}_base_price`;
 
 const extractVolumeKey = (title) => {
