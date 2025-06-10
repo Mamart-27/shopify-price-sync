@@ -39,7 +39,6 @@ module.exports = async (req, res) => {
     console.log('🔔 Webhook triggered');
     console.log('📦 Product ID:', product.id);
     console.log('Shop domain:', process.env.SHOP_DOMAIN);
-    console.log("Parsed body:", body);
 
 
 
