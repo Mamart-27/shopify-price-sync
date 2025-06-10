@@ -39,7 +39,6 @@ module.exports = async (req, res) => {
     console.log('🔔 Webhook triggered');
     console.log('📦 Product ID:', product.id);
     console.log('Shop domain:', process.env.SHOP_DOMAIN);
-    console.log("Webhook raw body:", rawBody.toString('utf8'));
     console.log("Parsed body:", body);
 
 
@@ -131,7 +130,8 @@ module.exports = async (req, res) => {
       }
     };
 
-    const productData = await fetchProductData(product.id);
+    // const productData = await fetchProductData(product.id);
+    const product = body; 
 
     console.log(`🎯 Processing: ${productData.title} (${productData.product_type})`);
 
