@@ -139,58 +139,44 @@ module.exports = async (req, res) => {
 
     const metafields = await fetchProductMetafields(product.id);
 
-    for (const variant of productData.variants) {
-      const volumeKey = extractVolumeKey(variant.title);
-      if (!volumeKey || !VOLUME_MULTIPLIERS[volumeKey]) {
-        console.log(`⛔ Skipping variant: ${variant.title}`);
-        continue;
-      }
+for (const variant of productData.variants) {
+  const volumeKey = extractVolumeKey(variant.title);
+  if (!volumeKey || !VOLUME_MULTIPLIERS[volumeKey]) {
+    console.log(`⛔ Skipping variant: ${variant.title}`);
+    continue;
+  }
 
-      const multiplier = VOLUME_MULTIPLIERS[volumeKey];
-      const metafieldKey = getMetafieldKey(volumeKey);
+  const multiplier = VOLUME_MULTIPLIERS[volumeKey];
+  const metafieldKey = getMetafieldKey(volumeKey);
+  const currentPrice = parseFloat(variant.price);
 
-      let metafield = metafields.find(
-        (mf) => mf.namespace === 'custom' && mf.key === metafieldKey
-      );
+  let metafield = metafields.find(
+    (mf) => mf.namespace === 'custom' && mf.key === metafieldKey
+  );
 
-      // if (!metafield) {
-      //   console.log(`🆕 Creating metafield ${metafieldKey}`);
-      //   await addNewMetaFieldOnProduct(product.id, 0, 'custom', metafieldKey);
-      //   continue; // Skip for now
-      // }
-      const existing = metafields.find(
-        (mf) => mf.namespace === 'custom' && mf.key === key
-      );
-      if (existing) {
-        console.log(`⚠️ Metafield ${key} already exists, skipping`);
-        return;
-      }
+  if (!metafield) {
+    const baseFromPrice = parseFloat((currentPrice * multiplier).toFixed(2));
+    console.log(`🆕 Creating metafield ${metafieldKey} with base price: ${baseFromPrice}`);
+    await addNewMetaFieldOnProduct(product.id, baseFromPrice, 'custom', metafieldKey);
+    continue;
+  }
 
-      if (!metafield) {
-        const baseFromPrice = parseFloat((currentPrice * multiplier).toFixed(2));
-        console.log(`🆕 Creating metafield ${metafieldKey} with base price: ${baseFromPrice}`);
-        await addNewMetaFieldOnProduct(product.id, baseFromPrice, 'custom', metafieldKey);
-        continue;
-      }
+  const currentBase = parseFloat(metafield.value);
+  const priceFromBase = parseFloat((currentBase / multiplier).toFixed(2));
+  const baseFromPrice = parseFloat((currentPrice * multiplier).toFixed(2));
 
+  const priceMismatch = Math.abs(currentPrice - priceFromBase) > 0.01;
+  const baseMismatch = Math.abs(currentBase - baseFromPrice) > 0.01;
 
-      const currentPrice = parseFloat(variant.price);
-      const currentBase = parseFloat(metafield.value);
+  if (currentBase === 0) {
+    await updateProductMetafield(metafield.id, baseFromPrice);
+  } else if (priceMismatch && baseMismatch) {
+    await updateVariantPrice(variant.id, priceFromBase);
+  } else {
+    console.log(`✅ ${volumeKey}: No update needed`);
+  }
+}
 
-      const priceFromBase = parseFloat((currentBase / multiplier).toFixed(2));
-      const baseFromPrice = parseFloat((currentPrice * multiplier).toFixed(2));
-
-      const priceMismatch = Math.abs(currentPrice - priceFromBase) > 0.01;
-      const baseMismatch = Math.abs(currentBase - baseFromPrice) > 0.01;
-
-      if (currentBase === 0) {
-        await updateProductMetafield(metafield.id, baseFromPrice);
-      } else if (priceMismatch && baseMismatch) {
-        await updateVariantPrice(variant.id, priceFromBase);
-      } else {
-        console.log(`✅ ${volumeKey}: No update needed`);
-      }
-    }
 
     res.status(200).send('Sync complete');
   } catch (error) {
