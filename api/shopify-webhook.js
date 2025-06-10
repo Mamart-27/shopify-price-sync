@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
     console.log('🔔 Webhook triggered');
     console.log('📦 Product ID:', product.id);
     console.log('Shop domain:', SHOP_DOMAIN);
-    console.log('Shop Token:', process.env.SHOPIFY_ACCESS_TOKEN);
+    console.log('Shop Token:', SHOPIFY_ACCESS_TOKEN);
     console.log(`🧪 Requesting: https://${SHOP_DOMAIN}/admin/api/2025-04/products/${product.id}.json`);
 
 
@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
         `https://${SHOP_DOMAIN}/admin/api/2025-04/products/${productId}.json`,
         {
           headers: {
-            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+            'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
           },
         }
       );
@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
         `https://${SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`,
         {
           headers: {
-            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+            'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
           },
         }
       );
@@ -78,7 +78,7 @@ module.exports = async (req, res) => {
         { variant: { id: variantId, price: newPrice.toFixed(2) } },
         {
           headers: {
-            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+            'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
             'Content-Type': 'application/json',
           },
         }
@@ -98,7 +98,7 @@ module.exports = async (req, res) => {
           },
           {
             headers: {
-              'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+              'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
               'Content-Type': 'application/json',
             },
           }
@@ -123,7 +123,7 @@ module.exports = async (req, res) => {
           },
           {
             headers: {
-              'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+              'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
               'Content-Type': 'application/json',
             },
           }
