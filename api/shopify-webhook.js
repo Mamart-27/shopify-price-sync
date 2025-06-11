@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
     // Fetch full product details
     const fetchProductData = async (productId) => {
       const { data } = await axios.get(
-        `https://${SHOP_DOMAIN}/admin/api/2025-04/products/${productId}.json`,
+        `https://${SHOP_DOMAIN}/admin/api/2024-10/products/${productId}.json`,
         {
           headers: {
             'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
@@ -58,7 +58,7 @@ module.exports = async (req, res) => {
 
     const fetchProductMetafields = async (productId) => {
       const { data } = await axios.get(
-        `https://${SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`,
+        `https://${SHOP_DOMAIN}/admin/api/2024-10/products/${productId}/metafields.json`,
         {
           headers: {
             'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
@@ -70,7 +70,7 @@ module.exports = async (req, res) => {
 
     const updateVariantPrice = async (variantId, newPrice) => {
       await axios.put(
-        `https://${SHOP_DOMAIN}/admin/api/2025-04/variants/${variantId}.json`,
+        `https://${SHOP_DOMAIN}/admin/api/2024-10/variants/${variantId}.json`,
         { variant: { id: variantId, price: newPrice.toFixed(2) } },
         {
           headers: {
@@ -85,7 +85,7 @@ module.exports = async (req, res) => {
     const updateProductMetafield = async (metafieldId, newValue) => {
       try {
         await axios.put(
-          `https://${SHOP_DOMAIN}/admin/api/2025-04/metafields/${metafieldId}.json`,
+          `https://${SHOP_DOMAIN}/admin/api/2024-10/metafields/${metafieldId}.json`,
           {
             metafield: {
               id: metafieldId,
@@ -108,7 +108,7 @@ module.exports = async (req, res) => {
     const addNewMetaFieldOnProduct = async (productId, value, namespace, key) => {
       try {
         await axios.post(
-          `https://${SHOP_DOMAIN}/admin/api/2025-04/products/${productId}/metafields.json`,
+          `https://${SHOP_DOMAIN}/admin/api/2024-10/products/${productId}/metafields.json`,
           {
             metafield: {
               namespace: namespace,
