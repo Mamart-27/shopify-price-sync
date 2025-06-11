@@ -41,6 +41,9 @@ module.exports = async (req, res) => {
 
     console.log('🔔 Webhook triggered');
     console.log('📦 Product ID:', product.id);
+    console.log("📨 Raw Body:", rawBody.toString('utf8'));
+    console.log('🔍 Raw payload:', JSON.stringify(body, null, 2));
+    console.log('🔍 product.id exists?', !!product.id);
 
 
     // Fetch full product details
