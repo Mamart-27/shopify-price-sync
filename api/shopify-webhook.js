@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
     const rawBody = await getRawBody(req);
     const body = JSON.parse(rawBody.toString('utf8'));
     const product = body;
-    const SHOP_DOMAIN='scentmethod.myshopify.com';
+    const SHOP_DOMAIN='scent-method.myshopify.com';
     const SHOPIFY_ACCESS_TOKEN='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';
 
 
