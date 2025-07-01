@@ -68,19 +68,19 @@ module.exports = async (req, res) => {
       return data.metafields;
     };
 
-    const updateVariantPrice = async (variantId, newPrice) => {
-      await axios.put(
-        `https://${SHOP_DOMAIN}/admin/api/2025-04/variants/${variantId}.json`,
-        { variant: { id: variantId, price: newPrice.toFixed(2) } },
-        {
-          headers: {
-            'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      console.log(`💸 Updated variant ${variantId} price to ${newPrice}`);
-    };
+    // const updateVariantPrice = async (variantId, newPrice) => {
+    //   await axios.put(
+    //     `https://${SHOP_DOMAIN}/admin/api/2025-04/variants/${variantId}.json`,
+    //     { variant: { id: variantId, price: newPrice.toFixed(2) } },
+    //     {
+    //       headers: {
+    //         'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+    //         'Content-Type': 'application/json',
+    //       },
+    //     }
+    //   );
+    //   console.log(`💸 Updated variant ${variantId} price to ${newPrice}`);
+    // };
 
     const updateProductMetafield = async (metafieldId, newValue) => {
       try {
