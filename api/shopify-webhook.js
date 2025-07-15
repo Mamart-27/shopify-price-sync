@@ -134,10 +134,11 @@ module.exports = async (req, res) => {
 
     console.log(`🎯 Processing: ${productData.title} (${productData.product_type})`);
 
-    const titleIncludesFragranceOil = productData.title.toLowerCase().includes('fragrance oil');
+    const normalizedTitle = productData.title.toLowerCase().replace(/[-–—]/g, ' ').replace(/\s+/g, ' ');
+    const titleIncludesFragranceOil = normalizedTitle.includes('fragrance oil');
     const isFragranceOilProduct = productData.product_type === 'Fragrance Oil';
 
-    if (!isFragranceOilProduct && !titleIncludesFragranceOil) {
+    if (!isFragranceOilProduct || !titleIncludesFragranceOil) {
       console.log('⚠️ Skipping non-Fragrance Oil product');
       return res.status(200).send('Skipped - Not Fragrance Oil');
     }
