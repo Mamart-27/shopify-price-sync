@@ -138,7 +138,7 @@ module.exports = async (req, res) => {
     const titleIncludesFragranceOil = normalizedTitle.includes('fragrance oil');
     const isFragranceOilProduct = productData.product_type === 'Fragrance Oil';
 
-    if (!isFragranceOilProduct || !titleIncludesFragranceOil) {
+    if (!isFragranceOilProduct && !titleIncludesFragranceOil) {
       console.log('⚠️ Skipping non-Fragrance Oil product');
       return res.status(200).send('Skipped - Not Fragrance Oil');
     }
