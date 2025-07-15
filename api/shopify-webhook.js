@@ -68,19 +68,19 @@ module.exports = async (req, res) => {
       return data.metafields;
     };
 
-    // const updateVariantPrice = async (variantId, newPrice) => {
-    //   await axios.put(
-    //     `https://${SHOP_DOMAIN}/admin/api/2025-04/variants/${variantId}.json`,
-    //     { variant: { id: variantId, price: newPrice.toFixed(2) } },
-    //     {
-    //       headers: {
-    //         'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
-    //         'Content-Type': 'application/json',
-    //       },
-    //     }
-    //   );
-    //   console.log(`💸 Updated variant ${variantId} price to ${newPrice}`);
-    // };
+    const updateVariantPrice = async (variantId, newPrice) => {
+      await axios.put(
+        `https://${SHOP_DOMAIN}/admin/api/2025-04/variants/${variantId}.json`,
+        { variant: { id: variantId, price: newPrice.toFixed(2) } },
+        {
+          headers: {
+            'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      console.log(`💸 Updated variant ${variantId} price to ${newPrice}`);
+    };
 
     const updateProductMetafield = async (metafieldId, newValue) => {
       try {
@@ -134,7 +134,10 @@ module.exports = async (req, res) => {
 
     console.log(`🎯 Processing: ${productData.title} (${productData.product_type})`);
 
-    if (productData.product_type !== 'Fragrance Oil') {
+    const titleIncludesFragranceOil = productData.title.toLowerCase().includes('fragrance oil');
+    const isFragranceOilProduct = productData.product_type === 'Fragrance Oil';
+
+    if (!isFragranceOilProduct && !titleIncludesFragranceOil) {
       console.log('⚠️ Skipping non-Fragrance Oil product');
       return res.status(200).send('Skipped - Not Fragrance Oil');
     }
