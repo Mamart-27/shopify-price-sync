@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
     const body = JSON.parse(rawBody.toString('utf8'));
     const product = body;
     const SHOP_DOMAIN='scent-method.myshopify.com';
-    const SHOPIFY_ACCESS_TOKEN='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';
+    const SHOPIFY_ACCESS_TOKEN='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';
 
 
     console.log('🔔 Webhook triggered');
