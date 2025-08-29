@@ -134,14 +134,22 @@ module.exports = async (req, res) => {
 
     console.log(`🎯 Processing: ${productData.title} (${productData.product_type})`);
 
-    const normalizedTitle = productData.title.toLowerCase().replace(/[-–—]/g, ' ').replace(/\s+/g, ' ');
-    const titleIncludesFragranceOil = normalizedTitle.includes('fragrance oil');
-    const isFragranceOilProduct = productData.product_type === 'Fragrance Oil';
+    // const normalizedTitle = productData.title.toLowerCase().replace(/[-–—]/g, ' ').replace(/\s+/g, ' ');
+    // const titleIncludesFragranceOil = normalizedTitle.includes('fragrance oil');
+    // const isFragranceOilProduct = productData.product_type === 'Fragrance Oil';
+
+    // if (!isFragranceOilProduct && !titleIncludesFragranceOil) {
+    //   console.log('⚠️ Skipping non-Fragrance Oil product');
+    //   return res.status(200).send('Skipped - Not Fragrance Oil');
+    // }
+    const titleIncludesFragranceOil = /fragrance\s*oil(s)?/i.test(productData.title);
+    const isFragranceOilProduct = productData.product_type?.toLowerCase() === 'fragrance oil';
 
     if (!isFragranceOilProduct && !titleIncludesFragranceOil) {
-      console.log('⚠️ Skipping non-Fragrance Oil product');
+      console.log(`⚠️ Skipping non-Fragrance Oil product: ${productData.title}`);
       return res.status(200).send('Skipped - Not Fragrance Oil');
     }
+
 
     const metafields = await fetchProductMetafields(product.id);
 
